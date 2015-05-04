@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="js/zepto.min.js"></script>
+    <link rel="stylesheet" href="css/pure.css">
+</head>
+
+<body >
+
+<div id="search_panel">
+    <a id='search' style="margin-left: 60%;margin-top: 20%; " class="pure-button pure-button-primary" ontouchstart="umdi.scan();" >Search</a>
+    <div  class="pure-menu" style="margin-top: 10%;">
+    <ul class="pure-menu-list" id="blunoList" ></ul>
+    </div>
+
+</div>
+
+<div id="main_control" style="position: relative">
+
+    <p id="status" style="left: 20px;top: 20px;">status is</p>
+
+    <p id="direct" style="left: 20px;top: 20px;">direction is </p>
+
+    <img id='circle' src="circle.png" style="position:absolute; width:90px;margin-left: -45px;margin-top: -45px" />
+</div>
+
+<script>
+
+function scanResult(){
+       
+           $('#blunoList').empty();
+            if(JSON.stringify(umdi.blunDict) != '{}') {
+                for (dev in umdi.blunDict) {
+                    $('#blunoList').append("<li class='pure-menu-item'><a"+ " id="+dev+"  ontouchstart='connectToDev(this)' "+" class='pure-menu-link'>device ID :"+
+                    dev+"<br>device Name:"+umdi.blunDict[dev]+"</a></li>");
+
+                }
+            }
+
+    }
+
+function connectToDev(row){
+    umdi.connect(row.id);
+    $('#search_panel').hide();
+    $('#main_control').show();
+
+}
+</script>
+
+
+
+
+</body>
+
+
+<script>
+
+
+    window.onload = function(){
+       // $('#search_panel').hide();
+
+        $('#main_control').hide();
+        document.body.style.background = 'white';
+
+    }
+
+    var directionString ='';
+
+    var circle = document.getElementById('circle');
+
+//      circle.style.marginLeft = (screen.width/2.0 - circle.width/2.0)+ 'px';
+//      circle.style.marginTop= (screen.height/2.0 - circle.height/2.0)+ 'px';
+        circle.style.left = '203.5px';
+        circle.style.top= '355.5px';
+
+
+
+
+
+circle.addEventListener('touchstart',pinGestureStart,false);
+circle.addEventListener('touchmove',pinGestureMove,false);
+circle.addEventListener('touchend',pinGestureEnd,false);
+
+
+
+
+function pinGestureStart(evt){
+
+console.log('touch start');
+
+}
+
+    function pinGestureMove(evt){
+    console.log('touch move');
+
+    circle.style.left =  (evt.touches[0].clientX).toFixed(1)+'px';
+
+    circle.style.top = (evt.touches[0].clientY).toFixed(1)+ 'px';
+
+   // console.log(evt.touches[0].clientX);
+   // console.log(evt.touches[0].clientY);
+    getDirection(evt.touches[0].clientX,evt.touches[0].clientY)  ;
+}
+
+
+function pinGestureEnd(evt){
+
+console.log('touch end');
+
+    circle.style.left =  '203.5px';
+
+    circle.style.top = '355.5px';
+    document.body.style.background = 'white';
+    umdi.write(0);
+
+
+}
+
+
+function readyToChange(value){
+
+    if(directionString != value){
+
+        directionString = value;
+
+        switch (value)
+        {
+            case 'Front': {
+                            umdi.write(36);
+                            console.log('Front');
+                            document.body.style.background = 'red';
+                            document.getElementById('direct').innerHTML = 'Front';
+                            break;
+                           }
+            case 'RightFront': {
+                            document.body.style.background = 'blue';
+                            console.log('RightFront');
+                            umdi.write(32);
+                            document.getElementById('direct').innerHTML = 'RightFront';
+                            break;
+                            }
+            case 'Right': {
+                            document.body.style.background = 'green';
+                            console.log('Right')
+                            umdi.write(40);
+                            document.getElementById('direct').innerHTML = 'Right';
+
+                            break;
+                            }
+            case 'BackRight': {
+                            console.log('BackRight');
+                            document.body.style.background = 'purple';
+                            umdi.write(16);
+                            document.getElementById('direct').innerHTML = 'BackRight';
+
+                            break;
+                            }
+            case 'Back': {
+                            document.body.style.background = 'gray';
+
+                            console.log('Back')
+                            umdi.write(24);
+                            document.getElementById('direct').innerHTML = 'Back';
+                            break;
+                            }
+            case 'LeftBack': {
+                            document.body.style.background = 'magenta';
+                            console.log('LeftBack');
+                            umdi.write(8);
+                            document.getElementById('direct').innerHTML = 'LeftBack';
+                            break;
+                            }
+            case 'Left': {
+                            document.body.style.background = 'cyan';
+                            console.log('Left');
+                            umdi.write(20);
+                            document.getElementById('direct').innerHTML = 'Left';
+                            break;
+                            }
+            case 'LeftFront': {
+                            document.body.style.background = 'brown';
+                            console.log('LeftFront');
+                            umdi.write(4);
+                            document.getElementById('direct').innerHTML = 'LeftFront';
+
+                            break;
+                            }
+
+        }
+
+
+
+    }
+
+
+}
+
+
+function getDirection(x,y){
+
+
+    var value = (x - 159.5)/Math.sqrt(Math.pow(x-159.5,2)+Math.pow(y-320.5,2));
+
+    var cosValue = Math.acos(value);
+
+    var angle = (320.5-y) > 0 ? cosValue*(180/Math.PI) :(360- cosValue*(180/Math.PI));
+
+
+    console.log(angle);
+
+    if ((angle < 112.5) && (angle > 67.5)) {
+
+
+        readyToChange('Front');
+
+    }
+    if ((angle < 67.5) && (angle > 22.5)) {
+
+        readyToChange('RightFront');
+    }
+
+    if (((angle > 337.5) && ( angle < 360)) || ( (angle > 0) && (angle < 22.5 ))) {
+
+        readyToChange('Right');
+
+    }
+    if ((angle < 337.5) && (angle > 292.5)) {
+
+        readyToChange('BackRight');
+
+    }
+    if ((angle < 292.5) && (angle > 247.5)) {
+
+        readyToChange('Back');
+
+    }
+    if ((angle < 247.5) && (angle > 202.5)) {
+
+        readyToChange('LeftBack');
+    }
+    if ((angle < 202.5) && (angle > 157.5)) {
+
+        readyToChange('Left');
+
+    }
+    if ((angle < 157.5) && (angle > 112.5)) {
+
+        readyToChange('LeftFront');
+    }
+
+
+
+
+
+
+}
+
+
+</script>
+</html>
